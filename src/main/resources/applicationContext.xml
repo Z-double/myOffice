@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+             http://www.springframework.org/schema/beans
+             http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+             http://www.springframework.org/schema/context
+             http://www.springframework.org/schema/context/spring-context-3.0.xsd
+             http://www.springframework.org/schema/aop
+             http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+             http://www.springframework.org/schema/tx
+             http://www.springframework.org/schema/tx/spring-tx.xsd">
+    <!-- 自动扫面注解包 -->
+    <context:annotation-config />
+    <context:component-scan base-package="cn.mylife"/>
+
+    <context:property-placeholder location="classpath:dateSource.properties"/>
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+    <!-- org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <!-- 自动扫描制定位置下的实体进行映射  -->
+        <property name="packagesToScan" value="cn.mylife.entity"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+                <prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+                <!--<prop key="hibernate.cache.provider_class">${hibernate.cache.provider_class}</prop>-->
+                <prop key="hibernate.cache.use_query_cache">${hibernate.cache.use_query_cache}</prop>
+                <prop key="hibernate.jdbc.batch_size">${hibernate.default_batch_fetch_size}</prop>
+                <prop key="hibernate.cache.use_second_level_cache">${hibernate.cache.use_second_level_cache}</prop>
+                <!--<prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>-->
+                <!-- 这一个必须配置，否则会出现no session 的错误 -->
+                <prop key="hibernate.current_session_context_class">${hibernate.current_session_context_class}</prop>
+                <prop key="hibernate.connection.url">jdbc:oracle:thin:@localhost:1521:orcl</prop>
+                <prop key="hibernate.connection.driver_class">oracle.jdbc.OracleDriver</prop>
+            </props>
+        </property>
+    </bean>
+    <!--第一种事物管理 start  -->
+    <!-- 用于注入到GeneralDao中 -->
+    <!-- <bean id="hibernateTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean> -->
+
+    <!-- 配置事务管理 -->
+    <!--  <bean id="transactionManager"
+         class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+         <property name="sessionFactory" ref="sessionFactory" />
+     </bean>   -->
+
+    <!-- 开启事务管理注解 -->
+    <!-- <aop:aspectj-autoproxy />
+    <tx:annotation-driven />   -->
+    <!--第一种事物管理 end  -->
+<!-- ****************************************************************************************************************-->
+    <!--第二种声明事物配置 start  -->
+    <!-- 配置事物管理器 -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <!--配置事物的通知  -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <!--配置哪些方法使用什么样的事物，配置事物的传播性-->
+        <!-- REQUIRED表示如果不存在事物则必须产生一个事物 -->
+        <tx:attributes>
+            <tx:method name="save*" propagation="REQUIRED" />
+            <tx:method name="add*" propagation="REQUIRED" />
+            <tx:method name="create*" propagation="REQUIRED" />
+            <tx:method name="insert*" propagation="REQUIRED" />
+            <tx:method name="update*" propagation="REQUIRED" />
+            <tx:method name="merge*" propagation="REQUIRED" />
+            <tx:method name="delete*" propagation="REQUIRED" />
+            <tx:method name="enable*" propagation="REQUIRED" />
+            <tx:method name="disable*" propagation="REQUIRED" />
+            <tx:method name="put*" propagation="REQUIRED" />
+            <tx:method name="use*" propagation="REQUIRED"/>
+            <!--hibernate4必须配置为开启事务 否则 getCurrentSession()获取不到-->
+            <tx:method name="get*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="count*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="find*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="list*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="*" propagation="REQUIRED" read-only="true" />
+        </tx:attributes>
+    </tx:advice>
+    <!-- 哪些类的哪些方法参与事务 -->
+    <!--当前代理是否为可暴露状态，值是"ture"，则为可访问。-->
+    <aop:config expose-proxy="true">
+        <!-- 对子类业务逻辑层实施事务 -->
+        <!-- 解释一下(* com.zz.dao.*.*(..)))中几个通配符的含义：
+         第一个 * —— 通配 任意返回值类型
+         第二个 * —— 通配 包com.evan.crm.service下的任意class
+         第三个 * —— 通配 包com.evan.crm.service下的任意class的任意方法
+         第四个 .. —— 通配 方法可以有0个或多个参数 -->
+        <aop:pointcut id="h4TPointcutSub" expression="execution(* cn.mylife.dao.*.*(..))" />
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="h4TPointcutSub"/>
+    </aop:config>
+    <!--第二种事物管理 end  -->
+</beans>

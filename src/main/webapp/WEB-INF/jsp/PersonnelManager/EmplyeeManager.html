@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>员工管理</title>
+    <link rel="stylesheet" type="text/css" href="../../js/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../../js/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="../../js/demo/demo.css">
+    <script type="text/javascript" src="../../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../../js/jquery.easyui.min.js"></script>
+    <script>
+        $(function () {
+            $('#dg').datagrid({
+                url:'../json/111.json',
+                columns:[[
+                    {field:'id',title:'用户id',width:100},
+                    {field:'name',title:'姓名',width:100},
+                    {field:'password',title:'密码',width:100},
+                    {field:'role',title:'角色',width:100},
+                    {field:'xq',title:'用户详情',width:100,align:'center',
+                        formatter:function(value, rowData, rowIndex){
+                            var operate = '<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-edit" onclick="getUser(' + rowIndex + ')">查看详情</a>'
+                            return operate;
+                        }
+                    },
+                    {field:'edit',title:'修改',width:100,align:'center',
+                        formatter:function(value, rowData, rowIndex){
+                            var operate = '<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-edit" onclick="modify(' + rowIndex + ')">修改</a>'
+                            return operate;
+                        }/*,
+                     styler : function (value, rowData, rowIndex){
+                     if(rowIndex%2==0){
+                     return 'background-color:#ffee00;color:red;';
+                     }
+                     }*/},
+                    {field:'remove',title:'删除',width:100,align:'center',
+                        formatter:function (value, rowData, rowIndex){
+                            var operate ='<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-remove" onclick="saveEdit(' + rowIndex + ')">删除</a> '
+                            return operate;
+                        }}
+                ]],
+                toolbar: '#tb',
+                striped:true,
+                nowrap : true,
+                idField : "id",
+                /*显示分页*/
+                pagination : true,
+                /*显示行号*/
+                rownumbers : true,
+                /*只允许选中一行*/
+                singleSelect : true,
+                pagePosition: "bottom",
+
+                /*加载过滤数据*/
+                loadFilter : function (res) {
+                    return res;
+                }
+            });
+        })
+    function addUser() {
+        $("#em").dialog({
+            title: '保存部门信息',
+            width: 'auto',
+            height:500,
+            closed: false,
+            cache: false,
+            modal: true,
+            buttons:[{
+                text:'保存',
+                handler:function(){
+                    $.ajax({
+                        url: "/account/login/",
+                        type: "POST",
+                        cache: false,
+                        async: false,
+                        dataType: "json",
+                        data:{email:$("#email").val(),password:$("#password").val()},
+                        complete: function (XHR, TS) { XHR = null } ,
+                        beforeSend: function () {
+                            $('#login_form_error').html("提交中..");
+                        },
+                        success: function(date) {
+                            if (date.msg) {
+                                $("#login_form_error").html(date.msg);
+                            }
+                            if(!date.msg){
+                                result = 1;
+                                document.location.reload();
+                            };
+                        },
+                        error: function() {
+                            //called when there is an error
+                        }
+                    });
+                }
+            },{
+                text:'取消',
+                handler:function(){
+                    $("#orgInfo").fadeOut(150,function(){ $(this).remove(); });
+                    $( this ).dialog( "close" );
+                }
+            }]
+        });
+    }
+
+    function getUser(id) {
+            $("#em").dialog({
+                title: '用户详细信息',
+                width: 'auto',
+                height:500,
+                closed: false,
+                cache: false,
+                modal: true,
+                onClose : function() {
+                    $(this).dialog('destroy');
+                },
+                buttons:[{
+                    text:'返回',
+                    handler:function(){
+                        //$("#orgInfo").fadeOut(150,function(){ $(this).remove(); });
+                        $("#em").dialog("close");
+                    }
+                }]
+            });
+    }
+    </script>
+</head>
+<body>
+<div>
+    <div style="margin-bottom: 10px;" id="tb">
+        <span>姓名：</span>
+        <input id="jm" class="easyui-searchbox" style="width:100px"></input>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-add" onclick="addUser()"
+           plain="true">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-edit" onclick="edituser()"
+           plain="true">修改</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-remove"
+           plain="true">删除</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-save"
+           plain="true">保存</a>
+    </div>
+    <table id="dg" style="margin-top: 10px"></table>
+    <div id="em"  class="easyui-dialog" title="Basic Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true,modal:true">
+        <form id="emForm">
+            <fieldset>
+                <br />
+                <label for="name">用户登录名:</label>
+                <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="password">密码:</label>
+                <input type="password" name="password" id="password2" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="aa">确认密码：</label>
+                <input type="password" name="password" id="password" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="user1">真实姓名：</label>
+                <input type="password" name="password" id="password1" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="user2">所在部门：</label>
+                <input id="cc" class="easyui-combobox" name="dept"
+                       data-options="valueField:'id',textField:'text',url:''"><br /><br />
+                <label for="user3">性别：</label>
+                <input id="certType" type="radio" name="certType"
+                       class="easyui-validatebox" checked="checked" value="男"><label>男</label></input>
+                <input id="certType" type="radio" name="certType"
+                       class="easyui-validatebox" value="女"><label>女</label></input><br /><br />
+                <label for="userw">角色：</label>
+                <input type="password" name="password" id="password31" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="userwq3">当前状态：</label>
+                <input type="password" name="password" id="password3" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="usqer3">头像：</label>
+                <input class="easyui-filebox" name="file1" data-options="prompt:'Choose a file...'" style="width:100%"><br /><br />
+            </fieldset>
+        </form>
+    </div>
+</div>
+</body>
+</html>

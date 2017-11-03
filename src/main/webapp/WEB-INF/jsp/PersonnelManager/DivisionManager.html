@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>部门管理</title>
+    <link rel="stylesheet" type="text/css" href="../../js/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../../js/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="../../js/demo/demo.css">
+    <script type="text/javascript" src="../../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../../js/jquery.easyui.min.js"></script>
+    <script>
+        $(function () {
+            $('#dg').datagrid({
+                url:'../json/jgJson.json',
+                columns:[[
+                    {field:'id',title:'id',width:100},
+                    {field:'departName',title:'部门名称',width:100},
+                    {field:'orgName',title:'机构',width:100},
+                    {field:'user',title:'负责人',width:100},
+                    {field:'phone',title:'联系电话',width:100},
+                    {field:'mobile',title:'移动电话',width:100},
+                    {field:'cz',title:'传真',width:100,align:'center',
+                        formatter:function(value, rowData, rowIndex){
+                            var operate = '<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-edit" onclick="modify(' + rowIndex + ')">修改</a>'
+                            return operate;
+                    }/*,
+                        styler : function (value, rowData, rowIndex){
+                            if(rowIndex%2==0){
+                                return 'background-color:#ffee00;color:red;';
+                            }
+                        }*/},
+                    {field:'remove',title:'删除',width:100,align:'center',
+                        formatter:function (value, rowData, rowIndex){
+                            var operate ='<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-remove" onclick="saveEdit(' + rowIndex + ')">删除</a> '
+                            return operate;
+                    }}
+                ]],
+                toolbar: '#tb',
+                striped:true,
+                nowrap : true,
+                idField : "id",
+                /*显示分页*/
+                pagination : true,
+                /*显示行号*/
+                rownumbers : true,
+                /*只允许选中一行*/
+                singleSelect : true,
+                pagePosition: "bottom",
+
+                /*加载过滤数据*/
+                loadFilter : function (res) {
+                    return res;
+                }
+            });
+        })
+    function newOrg() {
+        $('#dd').dialog({
+            title: '保存部门信息',
+            width: 400,
+            height:325,
+            closed: false,
+            cache: false,
+            modal: true,
+            buttons:[{
+                text:'保存',
+                handler:function(){
+                    $.ajax({
+                        url: "/account/login/",
+                        type: "POST",
+                        cache: false,
+                        async: false,
+                        dataType: "json",
+                        data:{email:$("#email").val(),password:$("#password").val()},
+                        complete: function (XHR, TS) { XHR = null } ,
+                        beforeSend: function () {
+                            $('#login_form_error').html("提交中..");
+                        },
+                        success: function(date) {
+                            if (date.msg) {
+                                $("#login_form_error").html(date.msg);
+                            }
+                            if(!date.msg){
+                                result = 1;
+                                document.location.reload();
+                            };
+                        },
+                        error: function() {
+                            //called when there is an error
+                        }
+                    });
+                }
+            },{
+                text:'取消',
+                handler:function(){
+                    $("#orgInfo").fadeOut(150,function(){ $(this).remove(); });
+                    $( this ).dialog( "close" );
+                }
+            }]
+        });
+    }
+    </script>
+</head>
+<body>
+    <div>
+            <h2 align="center">部门管理</h2>
+            <hr style="height:1px;border:none;border-top:1px solid #555555;" width="90%"/>
+        <div style="margin-bottom: 10px;align-self: flex-start" id="tb">
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-add" onclick="newOrg()"
+               plain="true" >添加</a>
+        </div>
+        <table id="dg" style="margin-top: 10px"></table>
+    </div>
+    <div id="dd" class="easyui-dialog" title="My Dialog" style="width:400px;height:200px;"
+         data-options="iconCls:'icon-save',resizable:true, closed:true,modal:true">
+        <form id="orgInfo">
+            <fieldset>
+                <br />
+                <label for="name">部门 名称:</label>
+                <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="password">所属 机构:</label>
+                <input id="cc" class="easyui-combobox" name="dept"
+                       data-options="valueField:'id',textField:'text',url:'get_data.php'"><br /><br />
+                <label for="aa">部门负责人：</label>
+                <input type="password" name="password" id="password" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="user1">联系 电话：</label>
+                <input type="password" name="password" id="password1" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="user2">移动 电话：</label>
+                <input type="password" name="password" id="password2" class="text ui-widget-content ui-corner-all" /><br /><br />
+                <label for="user3">传     真：</label>
+                <input type="password" name="password" id="password3" class="text ui-widget-content ui-corner-all" /><br /><br />
+            </fieldset>
+        </form>
+    </div>
+</body>
+</html>
