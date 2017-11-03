@@ -2,7 +2,7 @@ package cn.mylife.dao.daoImpl;
 
 import java.util.List;
 import javax.annotation.Resource;
-import cn.mylife.dao.IBaseDao;
+import cn.mylife.dao.IBaseDAO;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
